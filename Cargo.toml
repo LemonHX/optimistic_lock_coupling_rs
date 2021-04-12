@@ -3,6 +3,8 @@ name = "optimistic_lock_coupling"
 version = "0.1.0"
 authors = ["lemonhx <lemonhx@lemonhx.tech>"]
 edition = "2018"
+description = "A General Lock following paper 'Optimistic Lock Coupling: A Scalable and Efficient General-Purpose Synchronization Method' "
+license = "Unlicense"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
