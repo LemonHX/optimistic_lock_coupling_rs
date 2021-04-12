@@ -1,0 +1,31 @@
+[package]
+name = "optimistic_lock_coupling"
+version = "0.1.0"
+authors = ["lemonhx <lemonhx@lemonhx.tech>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "optimistic_lock_coupling"
+path = "src/lib.rs"
+
+[[bin]]
+name = "read_example"
+path = "example/read.rs"
+[[bin]]
+name = "write_example"
+path = "example/write.rs"
+[[bin]]
+name = "multi_thread_example"
+path = "example/multi_thread.rs"
+
+
+[[bench]]
+name = "benchmark"
+harness = false
+path = "benches/benchmark.rs"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[dependencies]
