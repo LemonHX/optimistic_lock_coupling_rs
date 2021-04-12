@@ -1,4 +1,7 @@
 # Optimistic Lock Coupling
+
+![🍋 CI](https://github.com/LemonHX/optimistic_lock_coupling_rs/actions/workflows/rust.yml/badge.svg)
+
 > from paper "Optimistic Lock Coupling: A Scalable and Efficient General-Purpose Synchronization Method"
 
 In actual projects, there are some lock-free data structures, especially database-related ones such as `BwTree`, `Split-Ordered List` (also known as Lock Free HashTable) when there are many write conflicts.
