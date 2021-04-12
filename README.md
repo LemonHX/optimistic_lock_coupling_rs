@@ -1,6 +1,6 @@
 # Optimistic Lock Coupling
 
-![🍋 CI](https://github.com/LemonHX/optimistic_lock_coupling_rs/actions/workflows/rust.yml/badge.svg)
+![🍋 CI](https://github.com/LemonHX/optimistic_lock_coupling_rs/actions/workflows/rust.yml/badge.svg) ![docs.rs](https://docs.rs/optimistic_lock_coupling/badge.svg)
 
 > from paper "Optimistic Lock Coupling: A Scalable and Efficient General-Purpose Synchronization Method"
 
