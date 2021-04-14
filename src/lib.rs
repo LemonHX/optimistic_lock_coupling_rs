@@ -1,5 +1,6 @@
 #![feature(negative_impls)]
 #![feature(unboxed_closures)]
+#![feature(stmt_expr_attributes)]
 
 use std::{
     cell::UnsafeCell,
@@ -43,6 +44,51 @@ impl<T> OptimisticLockCoupling<T> {
             version_lock_outdate: AtomicU64::new(0),
             poisoned: AtomicBool::new(false),
             data: UnsafeCell::new(t),
+        }
+    }
+    // logic should be an inlined closure
+    #[inline(always)]
+    pub fn read_txn<F, R>(&self, mut logic: F) -> OptimisticLockCouplingResult<R>
+    where
+        F: FnMut(&OptimisticLockCouplingReadGuard<T>) -> OptimisticLockCouplingResult<R>,
+    {
+        'txn: loop {
+            match self.read() {
+                Ok(guard) => match logic(&guard) {
+                    Ok(r) => match guard.try_sync() {
+                        Ok(_) => {
+                            return Ok(r);
+                        }
+                        Err(e) => match e {
+                            OptimisticLockCouplingErrorType::Poisoned
+                            | OptimisticLockCouplingErrorType::Outdated => {
+                                return Err(e);
+                            }
+                            _ => {
+                                continue 'txn;
+                            }
+                        },
+                    },
+                    Err(e) => match e {
+                        OptimisticLockCouplingErrorType::Poisoned
+                        | OptimisticLockCouplingErrorType::Outdated => {
+                            return Err(e);
+                        }
+                        _ => {
+                            continue 'txn;
+                        }
+                    },
+                },
+                Err(e) => match e {
+                    OptimisticLockCouplingErrorType::Poisoned
+                    | OptimisticLockCouplingErrorType::Outdated => {
+                        return Err(e);
+                    }
+                    _ => {
+                        continue 'txn;
+                    }
+                },
+            }
         }
     }
 }

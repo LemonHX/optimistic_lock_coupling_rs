@@ -21,25 +21,14 @@ fn main() {
     };
     let read_fn = move || unsafe {
         for _i in 0..i {
-            // std::thread::sleep_ms(8);
-            loop {
-                let g = lock.as_ref().unwrap();
-                match g.read() {
-                    Ok(guard) => {
-                        println!("{:?}", guard);
-                        match guard.try_sync() {
-                            Ok(_) => {
-                                break;
-                            }
-                            Err(_) => {
-                                continue;
-                            }
-                        }
-                    }
-                    Err(_) => {
-                        continue;
-                    }
-                }
+            while let Ok(_) = lock.as_ref().unwrap().read_txn(
+                #[inline(always)]
+                |guard| {
+                    println!("{}", guard);
+                    Ok(())
+                },
+            ) {
+                break;
             }
         }
     };

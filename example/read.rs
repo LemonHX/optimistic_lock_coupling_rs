@@ -17,13 +17,13 @@ fn read_txn(lock: &OptimisticLockCoupling<i32>) -> Result<(), OptimisticLockCoup
 fn main() {
     let lock = OptimisticLockCoupling::new(1);
     // retry steps
-    'retry: loop {
+    'retry: loop{
         // function call
         let res = read_txn(&lock);
         // before retry logics
         if res.is_err() {
             continue 'retry;
-        } else {
+        }else{
             break 'retry;
         }
     }

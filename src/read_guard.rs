@@ -9,8 +9,6 @@ use std::fmt::Debug;
 pub struct OptimisticLockCouplingReadGuard<'a, T: ?Sized + 'a> {
     lock: &'a OptimisticLockCoupling<T>,
     version: u64,
-    // 1bit redo | 1bit sync
-    flag: AtomicU8,
 }
 impl<'a, T: ?Sized> OptimisticLockCouplingReadGuard<'a, T> {
     #[inline(always)]
@@ -23,18 +21,10 @@ impl<'a, T: ?Sized> OptimisticLockCouplingReadGuard<'a, T> {
         Ok(Self {
             lock: &lock,
             version,
-            flag: AtomicU8::new(0),
         })
     }
 }
 impl<T: ?Sized> !Send for OptimisticLockCouplingReadGuard<'_, T> {}
-// impl<T: ?Sized> Drop for OptimisticLockCouplingReadGuard<'_, T> {
-//     fn drop(&mut self) {
-//         if self.flag.load(SeqCst) == 0 {
-//             panic!("drop before sync with the lock or other error occurs");
-//         }
-//     }
-// }
 impl<T: ?Sized> OptimisticLockCouplingReadGuard<'_, T> {
     // consume self return retry or not
     #[inline(always)]

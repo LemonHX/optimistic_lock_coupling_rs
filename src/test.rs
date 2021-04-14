@@ -33,7 +33,7 @@ fn read_while_write() {
 }
 
 #[test]
-fn lots_thread() {
+fn lots_thread_write() {
     static mut lock: Option<OptimisticLockCoupling<i32>> = None;
     unsafe { lock = Some(OptimisticLockCoupling::from(0)) };
     let add_10000 = move || {
