@@ -35,10 +35,8 @@ fn main() {
     use std::thread::spawn;
     let thread1 = spawn(write_fn);
     let thread2 = spawn(read_fn);
-    let thread3 = spawn(read_fn);
 
     let _ = thread1.join();
     let _ = thread2.join();
-    let _ = thread3.join();
     unsafe { assert_eq!(*(lock.as_ref().unwrap().write().unwrap()), i) }
 }

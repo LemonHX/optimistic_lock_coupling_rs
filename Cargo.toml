@@ -1,26 +1,10 @@
 [package]
 name = "optimistic_lock_coupling"
-version = "0.2.0"
+version = "0.2.5"
 authors = ["lemonhx <lemonhx@lemonhx.tech>"]
 edition = "2018"
 description = "A General Lock following paper 'Optimistic Lock Coupling: A Scalable and Efficient General-Purpose Synchronization Method' "
 license = "Unlicense"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-name = "optimistic_lock_coupling"
-path = "src/lib.rs"
-
-[[bin]]
-name = "read_example"
-path = "example/read.rs"
-[[bin]]
-name = "write_example"
-path = "example/write.rs"
-[[bin]]
-name = "multi_thread_example"
-path = "example/multi_thread.rs"
-
 
 [[bench]]
 name = "benchmark"
