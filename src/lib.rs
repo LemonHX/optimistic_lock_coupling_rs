@@ -45,6 +45,7 @@
 //! ```
 //! or in a much easy way~
 //! ```
+//! use optimistic_lock_coupling::{OptimisticLockCoupling, OptimisticLockCouplingErrorType};
 //! fn main(){
 //!     let lock = OptimisticLockCoupling::new(1);
 //!     lock.read_txn(
