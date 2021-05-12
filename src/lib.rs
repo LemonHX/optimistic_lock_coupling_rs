@@ -2,19 +2,19 @@
 #![feature(unboxed_closures)]
 #![feature(stmt_expr_attributes)]
 //! This crate provides a general optimistic lock.
-//! 
+//!
 //! # Description
 //!
 //! In actual projects, there are some lock-free data structures, especially database-related ones such as `BwTree`, `Split-Ordered List` (also known as Lock Free HashTable) when there are many write conflicts.
 //! The performance loss is very serious, and sometimes it is not as good as the brainless Mutex. However, the performance of the brainless Mutex is often very bad under normal circumstances, so is there an intermediate form that can solve this problem?
-//! 
+//!
 //! This is the intermediate form. So this can be used everywhere as a general lock, and the performance is satisfactory.
 //!
 //! # Simple example for read
-//! 
+//!
 //! ```
 //! use optimistic_lock_coupling::{OptimisticLockCoupling, OptimisticLockCouplingErrorType};
-//! 
+//!
 //! #[inline(always)]
 //! fn read_txn(lock: &OptimisticLockCoupling<i32>) -> Result<(), OptimisticLockCouplingErrorType> {
 //!     // acquire the read lock
@@ -27,7 +27,7 @@
 //!     println!("safely synced");
 //!     res
 //! }
-//! 
+//!
 //! fn main() {
 //!     let lock = OptimisticLockCoupling::new(1);
 //!     // retry steps
@@ -46,67 +46,69 @@
 //! or in a much easy way~
 //! ```
 //! use optimistic_lock_coupling::{OptimisticLockCoupling, OptimisticLockCouplingErrorType};
-//! fn main(){
-//!     let lock = OptimisticLockCoupling::new(1);
-//!     lock.read_txn(
-//!         // very important!
-//!         #[inline(always)]
-//!         |guard| {
-//!             println!("{}", guard);
-//!             Ok(())
-//!         },
-//!     )
-//!     .unwrap();
-//! }
+//!
+//! let lock = OptimisticLockCoupling::new(1);
+//! lock.read_txn(
+//!     // very important!
+//!     #[inline(always)]
+//!     |guard| {
+//!         println!("{}", guard);
+//!         Ok(())
+//!     },
+//! )
+//! .unwrap();
 //! ```
 //! # Thread-safety example
 //! will create a read thread and a write thread both holding the same lock.
 //! ```
-//!use optimistic_lock_coupling::*;
-//!fn main() {
-//!    let i = 10000;
-//!    static mut lock: Option<OptimisticLockCoupling<i32>> = None;
-//!    unsafe { lock = Some(OptimisticLockCoupling::from(0)) };
-//!    let write_fn = move || unsafe {
-//!        for _i in 0..i {
-//!            // std::thread::sleep_ms(10);
-//!            loop {
-//!                match lock.as_ref().unwrap().write() {
-//!                    Ok(mut guard) => {
-//!                        *guard += 1;
-//!                        break;
-//!                    }
-//!                    Err(_err) => {
-//!                        continue;
-//!                    }
-//!                }
-//!            }
-//!        }
-//!    };
-//!    let read_fn = move || unsafe {
-//!        for _i in 0..i {
-//!            while let Ok(_) = lock.as_ref().unwrap().read_txn(
-//!                #[inline(always)]
-//!                |guard| {
-//!                    println!("{}", guard);
-//!                    Ok(())
-//!                },
-//!            ) {
-//!                break;
-//!            }
-//!        }
-//!    };
-//!    use std::thread::spawn;
-//!    let thread1 = spawn(write_fn);
-//!    let thread2 = spawn(read_fn);
-//!
-//!    let _ = thread1.join();
-//!    let _ = thread2.join();
-//!    unsafe { assert_eq!(*(lock.as_ref().unwrap().write().unwrap()), i) }
-//!}
+//! use optimistic_lock_coupling::*;
+//! let i = 10000;
+//! static mut LOCK: Option<OptimisticLockCoupling<i32>> = None;
+//! unsafe { LOCK = Some(OptimisticLockCoupling::from(0)) };
+//! let write_fn = move || unsafe {
+//!     for _i in 0..i {
+//!         // std::thread::sleep_ms(10);
+//!         loop {
+//!             match LOCK.as_ref().unwrap().write() {
+//!                 Ok(mut guard) => {
+//!                     *guard += 1;
+//!                     break;
+//!                 }
+//!                 Err(_err) => {
+//!                     continue;
+//!                 }
+//!             }
+//!         }
+//!     }
+//! };
+//! let read_fn = move || unsafe {
+//!     for _i in 0..i {
+//!         while let Ok(_) = LOCK.as_ref().unwrap().read_txn(
+//!             #[inline(always)]
+//!             |guard| {
+//!                 println!("{}", guard);
+//!                 Ok(())
+//!             },
+//!         ) {
+//!             break;
+//!         }
+//!     }
+//! };
+//! use std::thread::spawn;
+//! let thread1 = spawn(write_fn);
+//! let thread2 = spawn(read_fn);
+
+//! let _ = thread1.join();
+//! let _ = thread2.join();
+//! unsafe { assert_eq!(*(LOCK.as_ref().unwrap().write().unwrap()), i) }
 //! ```
 
-use std::{cell::UnsafeCell, fmt::Display, ops::{Deref, DerefMut}, sync::atomic::{AtomicBool, AtomicU64}};
+use std::{
+    cell::UnsafeCell,
+    fmt::Display,
+    ops::{Deref, DerefMut},
+    sync::atomic::{AtomicBool, AtomicU64},
+};
 use std::{fmt::Debug, sync::atomic::Ordering::*};
 
 #[cfg(test)]
@@ -145,7 +147,7 @@ unsafe impl<T: ?Sized + Send + Sync> Sync for OptimisticLockCoupling<T> {}
 impl<T> OptimisticLockCoupling<T> {
     /// create an instance of OLC
     #[inline(always)]
-    pub fn new(t: T) -> Self {
+    pub const fn new(t: T) -> Self {
         Self {
             version_lock_outdate: AtomicU64::new(0),
             poisoned: AtomicBool::new(false),
@@ -263,15 +265,15 @@ impl<T: ?Sized> OptimisticLockCoupling<T> {
     }
 }
 
-#[inline(always)]
-fn is_locked(version: u64) -> bool {
+#[inline]
+const fn is_locked(version: u64) -> bool {
     version & 0b10 != 0
 }
-#[inline(always)]
-fn is_outdate(version: u64) -> bool {
+
+#[inline]
+const fn is_outdate(version: u64) -> bool {
     version & 0b1 != 0
 }
-
 
 // ============= reader guard =============== //
 
@@ -291,10 +293,7 @@ impl<'a, T: ?Sized> OptimisticLockCouplingReadGuard<'a, T> {
             return Err(Poisoned);
         }
         let version = lock.try_lock()?;
-        Ok(Self {
-            lock: &lock,
-            version,
-        })
+        Ok(Self { lock, version })
     }
 }
 impl<T: ?Sized> !Send for OptimisticLockCouplingReadGuard<'_, T> {}
@@ -307,8 +306,7 @@ impl<T: ?Sized> OptimisticLockCouplingReadGuard<'_, T> {
             drop(self);
             Ok(())
         } else {
-            use crate::OptimisticLockCouplingErrorType::*;
-            Err(VersionUpdated)
+            Err(crate::OptimisticLockCouplingErrorType::VersionUpdated)
         }
     }
 }
@@ -395,8 +393,8 @@ impl<T: Debug + Display> Display for OptimisticLockCouplingWriteGuard<'_, T> {
     }
 }
 impl<'a, T: ?Sized> OptimisticLockCouplingWriteGuard<'a, T> {
-    #[inline(always)]
-    pub fn new(lock: &'a OptimisticLockCoupling<T>) -> Self {
+    #[inline]
+    pub const fn new(lock: &'a OptimisticLockCoupling<T>) -> Self {
         Self { lock }
     }
 }

@@ -34,14 +34,14 @@ fn read_while_write() {
 
 #[test]
 fn lots_thread_write() {
-    static mut lock: Option<OptimisticLockCoupling<i32>> = None;
-    unsafe { lock = Some(OptimisticLockCoupling::from(0)) };
+    static mut LOCK: Option<OptimisticLockCoupling<i32>> = None;
+    unsafe { LOCK = Some(OptimisticLockCoupling::from(0)) };
     let add_10000 = move || {
         println!("{:?} started!", std::thread::current().id());
-        for _i in 0..10000 {
+        for _ in 0..10000 {
             loop {
                 unsafe {
-                    match (&lock).as_ref().unwrap().write() {
+                    match (&LOCK).as_ref().unwrap().write() {
                         Ok(mut guard) => {
                             *guard += 1;
                             break;
@@ -60,9 +60,9 @@ fn lots_thread_write() {
     std::thread::spawn(add_10000);
     std::thread::spawn(add_10000);
     // should be finished
-    std::thread::sleep_ms(5000);
+    std::thread::sleep(std::time::Duration::from_millis(5000));
     unsafe {
-        let read = lock.as_ref().unwrap().read().unwrap();
+        let read = LOCK.as_ref().unwrap().read().unwrap();
         assert_eq!(*read, 30000);
         read.try_sync().unwrap();
     }
